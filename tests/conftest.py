@@ -3,7 +3,7 @@ from typing import Any, Optional
 import pytest
 from flask import Flask
 
-from flask_ninja.security import HttpBearer
+from flask_gun.security import HttpBearer
 
 
 @pytest.fixture(scope="session")

@@ -4,8 +4,8 @@ from typing import Any, List, Optional
 
 from pydantic.fields import FieldInfo
 
-from flask_ninja.constants import ParamType
-from flask_ninja.model_field import Undefined
+from .constants import ParamType
+from .model_field import Undefined
 
 
 class FuncParam(FieldInfo):

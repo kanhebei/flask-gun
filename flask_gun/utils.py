@@ -7,10 +7,10 @@ from pydantic import BaseModel
 from pydantic._internal._utils import lenient_issubclass
 from pydantic.fields import FieldInfo
 
-from flask_ninja import param
-from flask_ninja.constants import ApiConfigError
-from flask_ninja.model_field import ModelField, Required, Undefined, UnionType
-from flask_ninja.param import FuncParam
+from . import param
+from .constants import ApiConfigError
+from .model_field import ModelField, Required, Undefined, UnionType
+from .param import FuncParam
 
 sequence_types = (list, set, tuple)
 

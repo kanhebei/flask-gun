@@ -9,20 +9,23 @@ from .models import Components, Info, OpenAPI, Server
 from .router import Router
 from .swagger_ui import swagger_ui_path
 
+from .model_field import ModelField
+from .operation import Callback
+
 
 class NinjaAPI:
     OPENAPI_VERSION = "3.1.0"
 
     def __init__(
-        self,
-        app: Flask,
-        auth: Any = NOT_SET,
-        title: str = "",
-        description: str = "",
-        version: str = "1.0.0",
-        servers: Optional[list[Server]] = None,
-        prefix: str = "",
-        docs_url: str = "/docs",
+            self,
+            app: Flask,
+            auth: Any = NOT_SET,
+            title: str = "",
+            description: str = "",
+            version: str = "1.0.0",
+            servers: Optional[list[Server]] = None,
+            prefix: str = "",
+            docs_url: str = "/docs",
     ):
         swagger_bp = Blueprint(
             "swagger_ui",
@@ -50,20 +53,109 @@ class NinjaAPI:
         self.prefix = prefix
         self.model_definitions: dict[str, Any] = {}
 
-    def get(self, path: str, **kwargs: Any) -> Callable:
-        return self.router.add_route("GET", self.prefix + path, **kwargs)
+    def get(
+            self,
+            path: str,
+            responses: Optional[Any] = None,
+            auth: Any = NOT_SET,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            callbacks: Optional[list[Callback]] = None,
+    ) -> Callable:
+        return self.router.add_route(
+            "GET",
+            self.prefix + path,
+            responses,
+            auth,
+            summary,
+            description,
+            params,
+            callbacks
+        )
 
-    def post(self, path: str, **kwargs: Any) -> Callable:
-        return self.router.add_route("POST", self.prefix + path, **kwargs)
+    def post(
+            self,
+            path: str,
+            responses: Optional[Any] = None,
+            auth: Any = NOT_SET,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            callbacks: Optional[list[Callback]] = None,
+    ) -> Callable:
+        return self.router.add_route(
+            "POST", self.prefix + path,
+            responses,
+            auth,
+            summary,
+            description,
+            params,
+            callbacks
+        )
 
-    def put(self, path: str, **kwargs: Any) -> Callable:
-        return self.router.add_route("PUT", self.prefix + path, **kwargs)
+    def put(
+            self,
+            path: str,
+            responses: Optional[Any] = None,
+            auth: Any = NOT_SET,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            callbacks: Optional[list[Callback]] = None,
+    ) -> Callable:
+        return self.router.add_route(
+            "PUT",
+            self.prefix + path,
+            responses,
+            auth,
+            summary,
+            description,
+            params,
+            callbacks
+        )
 
-    def patch(self, path: str, **kwargs: Any) -> Callable:
-        return self.router.add_route("PATCH", self.prefix + path, **kwargs)
+    def patch(
+            self,
+            path: str,
+            responses: Optional[Any] = None,
+            auth: Any = NOT_SET,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            callbacks: Optional[list[Callback]] = None,
+    ) -> Callable:
+        return self.router.add_route(
+            "PATCH",
+            self.prefix + path,
+            responses,
+            auth,
+            summary,
+            description,
+            params,
+            callbacks
+        )
 
-    def delete(self, path: str, **kwargs: Any) -> Callable:
-        return self.router.add_route("DELETE", self.prefix + path, **kwargs)
+    def delete(
+            self,
+            path: str,
+            responses: Optional[Any] = None,
+            auth: Any = NOT_SET,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            callbacks: Optional[list[Callback]] = None,
+    ) -> Callable:
+        return self.router.add_route(
+            "DELETE",
+            self.prefix + path,
+            responses,
+            auth,
+            summary,
+            description,
+            params,
+            callbacks
+        )
 
     def add_router(self, router: Router, prefix: str = "") -> None:
         self.router.add_router(router, f"{self.prefix}{prefix}")

@@ -7,11 +7,13 @@ import pytest
 from pydantic.json_schema import GenerateJsonSchema
 from werkzeug.datastructures import MultiDict
 
-from flask_ninja import Header, Query
-from flask_ninja.api import Server
-from flask_ninja.operation import ApiConfigError, Callback, Operation
-from flask_ninja.utils import create_model_field
+from flask_gun import Header, Query
+from flask_gun.api import Server
+from flask_gun.operation import ApiConfigError, Callback, Operation
+from flask_gun.utils import create_model_field
 from tests.conftest import BearerAuth, BearerAuthUnauthorized
+
+from flask import jsonify
 
 
 def view_func_str() -> str:
@@ -341,7 +343,7 @@ def test_run_query_list(test_app):
 
 def test_run_generics(test_app):
     def view_func(items: list[int]) -> list[int]:
-        return items
+        return jsonify(items)
 
     with test_app.test_request_context(
         json=[1, 2, 3],
@@ -351,7 +353,7 @@ def test_run_generics(test_app):
 
 
 def test_run_wrong_returned_type(test_app):
-    def view_func() -> int:
+    def view_func():
         return 1
 
     with pytest.raises(ApiConfigError):
@@ -382,8 +384,8 @@ def test_run_authorized(test_app):
 
 
 def test_run_unauthorized(test_app):
-    def view_func() -> int:
-        return 1
+    def view_func() -> str:
+        return '1'
 
     with test_app.test_request_context(headers={"Authorization": "bearer dev"}):
         o = Operation(

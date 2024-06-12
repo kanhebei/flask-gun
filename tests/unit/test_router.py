@@ -1,9 +1,9 @@
 import pytest
 
-from flask_ninja import Query
-from flask_ninja.operation import Callback, Operation
-from flask_ninja.router import Router
-from flask_ninja.utils import create_model_field
+from flask_gun import Query
+from flask_gun.operation import Callback, Operation
+from flask_gun.router import Router
+from flask_gun.utils import create_model_field
 from tests.conftest import BearerAuth
 
 

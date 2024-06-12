@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, Optional, Type, Union, cast, get_origin
 
 from docstring_parser import parse as doc_parse
 from flask import jsonify, request
+from werkzeug.exceptions import Unauthorized
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from .constants import NOT_SET, ApiConfigError, ParamType
@@ -55,20 +56,28 @@ class Callback(BaseModel):
         )
 
 
+def is_sqlalchemy_model(obj):
+    return hasattr(obj, '_sa_instance_state')
+
+
+def is_orm(obj):
+    return is_sqlalchemy_model(obj)
+
+
 class Operation:
     """Operation represents handler for one endpoint."""
 
     def __init__(
-        self,
-        path: str,
-        method: str,
-        view_func: Callable,
-        responses: Optional[Dict[int, BaseModel]] = None,
-        callbacks: Optional[list[Callback]] = None,
-        summary: str = "",
-        description: str = "",
-        params: Optional[list[ModelField]] = None,
-        auth: Any = NOT_SET,
+            self,
+            path: str,
+            method: str,
+            view_func: Callable,
+            responses: Optional[Dict[int, BaseModel]] = None,
+            callbacks: Optional[list[Callback]] = None,
+            summary: str = "",
+            description: str = "",
+            params: Optional[list[ModelField]] = None,
+            auth: Any = NOT_SET,
     ):
         self.path = path
         self.method = method
@@ -84,6 +93,7 @@ class Operation:
     def run(self, *args: Any, **kwargs: Any) -> Any:
         # Run authentication if configured
         if self.auth and self.auth() is None:
+            # raise Unauthorized(description='权限不足')
             return jsonify("Unauthorized"), 401
 
         try:
@@ -111,27 +121,45 @@ class Operation:
         except ValidationError as validation_error:
             return validation_error.json(), 400
 
+        def _resp_json(obj, status_code=200, header=None):
+            if status_code in self.responses.keys():
+                if isinstance(obj, dict):
+                    return (
+                        self.responses[status_code].type_(**obj).model_dump(),
+                        status_code,
+                        header
+                    )
+                if is_orm(obj):
+                    return (
+                        self.responses[status_code].type_.model_validate(obj).model_dump(),
+                        status_code,
+                        header
+                    )
+
+            return obj, status_code, header
+
         # Run the original view function
-        resp = self.view_func(*args, **kwargs)
+        rv = self.view_func(*args, **kwargs)
 
-        # Find model and response code for the returned object
-        for code, model in self.responses.items():
-            # if the mode is some generic with specified type
-            # e.g. list[str], dict[str, Response], etc, we can't use isinstance and
-            # at first need to get the unspecified generic type - e.g. list, dict, etc
-            # TODO match also the inner types of generics - but that's a corner case
-            if isinstance(resp, get_origin(model.type_) or model.type_):
-                # hotfix: if the resp is str we shouldn't use jsonify as it
-                # changes the response adding additional characters.
-                if isinstance(resp, str):
-                    return resp, code
-                return jsonify(self.serialize(resp)), code
+        if isinstance(rv, Response):
+            return rv
 
-        raise ApiConfigError(f"No response schema matches returned type {type(resp)}")
+        if not isinstance(rv, tuple):
+            return _resp_json(rv, 200)
+
+        if len(rv) == 2:
+            return _resp_json(rv[0], rv[1]) if isinstance(rv[1], int) else _resp_json(rv[0], 200, rv[1])
+
+        elif len(rv) >= 3:
+            # 保留前三个元素（JSON，状态码，响应头）
+            return _resp_json(rv[0], rv[1], rv[2])
+
+        else:
+            return _resp_json(rv[0])
 
     @staticmethod
     def _sanitize_responses(
-        responses: Any, view_func: Callable
+            responses: Any, view_func: Callable
     ) -> dict[int, ModelField]:
         func_return_type = view_func.__annotations__.get("return")
 
@@ -167,8 +195,8 @@ class Operation:
 
             # If we specified different return type as we specified as response
             elif (
-                200 in responses
-                and responses[200].field_info.annotation != func_return_type
+                    200 in responses
+                    and responses[200].field_info.annotation != func_return_type
             ):
                 raise ApiConfigError(
                     f"Return type of the function {type(func_return_type)} does not match response type {type(responses[200].type_)}"
@@ -181,7 +209,7 @@ class Operation:
         return SerializationModel(data=resp).model_dump(mode="json")["data"]
 
     def get_callback_schema(
-        self, cb: Callback, field_mapping: FieldMapping
+            self, cb: Callback, field_mapping: FieldMapping
     ) -> dict[str, PathItem]:
         """Generate schema for a callback.
 
@@ -259,7 +287,7 @@ class Operation:
         return parameters
 
     def get_openapi_request_body(
-        self, field_mapping: FieldMapping
+            self, field_mapping: FieldMapping
     ) -> Optional[RequestBody]:
         """Create OpenAPI schema for request body of this operation.
 
@@ -306,7 +334,7 @@ class Operation:
             description=doc.long_description or self.description,
             responses=responses,
             parameters=self.get_openapi_parameters(field_mapping=field_mapping)
-            or None,  # type:ignore
+                       or None,  # type:ignore
             requestBody=self.get_openapi_request_body(field_mapping=field_mapping),
             security=[{self.auth.schema_name: []}] if self.auth else None,
             callbacks=callbacks or None,
@@ -367,15 +395,15 @@ class Operation:
         This is needed to get definitions of all models for OpenAPI.
         """
         return (
-            self.params
-            + list(self.responses.values())
-            + list(cb.field for cb in (self.callbacks or []) if cb.field)
-            + list(
-                param
-                for cb in (self.callbacks or [])
-                if cb.request_body
-                for param in (cb.params or [])
-            )
+                self.params
+                + list(self.responses.values())
+                + list(cb.field for cb in (self.callbacks or []) if cb.field)
+                + list(
+            param
+            for cb in (self.callbacks or [])
+            if cb.request_body
+            for param in (cb.params or [])
+        )
         )
 
     def get_openapi_path(self) -> str:

@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from flask import request
 
-from flask_ninja.models import HTTPBearer, SecurityBase
+from .models import HTTPBearer, SecurityBase
 
 
 class HttpAuthBase(abc.ABC):

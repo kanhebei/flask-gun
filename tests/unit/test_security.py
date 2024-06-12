@@ -4,9 +4,9 @@ import pytest
 from flask import Flask
 from pydantic import BaseModel
 
-from flask_ninja import NinjaAPI
-from flask_ninja.models import HTTPBearer, SecuritySchemeType
-from flask_ninja.security import HttpBearer
+from flask_gun import NinjaAPI
+from flask_gun.models import HTTPBearer, SecuritySchemeType
+from flask_gun.security import HttpBearer
 
 
 class BearerAuth(HttpBearer):
@@ -57,15 +57,15 @@ def test_authentication(headers, status_code):
         def authenticate(self, token: str) -> Optional[Any]:
             return token == "123" or None
 
-    class Response(BaseModel):
+    class ResponseModel(BaseModel):
         status: str
 
     app = Flask(__name__)
     api = NinjaAPI(app, auth=MyBearer())
 
-    @api.get("/compute")
-    def compute() -> Response:
-        return Response(status="success")
+    @api.get("/compute", responses=ResponseModel)
+    def compute():
+        return dict(status="success")
 
     with app.test_client() as client:
         assert client.get("/compute", headers=headers).status_code == status_code
