@@ -13,7 +13,7 @@ from .model_field import ModelField
 from .operation import Callback
 
 
-class NinjaAPI:
+class GunAPI:
     OPENAPI_VERSION = "3.1.0"
 
     def __init__(
