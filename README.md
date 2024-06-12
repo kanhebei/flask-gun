@@ -1,9 +1,11 @@
-# Flask Ninja
+# Flask Gun
 
 ![build](https://github.com/kiwicom/flask-ninja/workflows/Build%20jobs/badge.svg)
 ![python](https://img.shields.io/badge/Python-3.9%20|%203.10-blue)
 
-**Flask Ninja** is a web framework for building APIs with Flask and Python 3.9+ type hints.
+**Flask Gun** is a web framework for building APIs with Flask and Python 3.9+ type hints.
+
+**Derived from Flask ninja 1.3.0 fork**
 
 Key features:
 
@@ -18,7 +20,7 @@ For mode details, see the [Documentation](https://flask-ninja.readthedocs.io/en/
 ## Installation
 
 ```
-pip install flask-ninja
+pip install flask-gun
 ```
 
 ## Usage
@@ -27,11 +29,11 @@ In your flask project where you create flask app:
 
 ```Python
 from flask import Flask
-from flask_ninja import NinjaAPI
+from flask_gun import GunAPI
 from pydantic import BaseModel
 
 app = Flask(__name__)
-api = NinjaAPI(app)
+api = GunAPI(app)
 
 class Response(BaseModel):
     """Response model containing results of various number operations."""
